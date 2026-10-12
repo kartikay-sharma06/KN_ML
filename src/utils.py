@@ -3,6 +3,7 @@ import sys
 import numpy as np 
 import pandas as pd
 import dill as pickle
+from sklearn.metrics import r2_score
 
 
 
@@ -18,4 +19,28 @@ def save_object(file_path:str,obj):
             pickle.dump(obj,file_obj)
 
     except Exception as e:
-        raise CustomException(e,sys)
+        raise CustomException(e,sys.exc_info())
+
+
+
+def evaluate_model(X_train,y_train,X_test,y_test,models:dict):
+    try:
+        report={}
+
+        for i in range(len(models)):
+            model=list(models.values())[i]
+            # Train model
+            model.fit(X_train,y_train)
+
+            # Predict Testing data
+            y_test_pred=model.predict(X_test)
+
+            # Get R2 score for test data
+            test_model_score=r2_score(y_test,y_test_pred)
+
+            report[list(models.keys())[i]]=test_model_score
+
+        return report
+
+    except Exception as e:
+        raise CustomException(e,sys.exc_info())
