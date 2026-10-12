@@ -3,12 +3,6 @@ import os
 import sys
 from dataclasses import dataclass
 
-import numpy as np
-
-from src.exception import CustomException
-from src.logger import logging
-from src.utils import save_object, evaluate_model
-
 from catboost import CatBoostRegressor
 
 from sklearn.ensemble import (
@@ -20,10 +14,14 @@ from sklearn.ensemble import (
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score as r2_score_metric
 
 from xgboost import XGBRegressor
+
+from src.exception import CustomException
+from src.logger import logging
+from src.utils import save_object, evaluate_model
+from src.components.hyperparameter_tuning import tune_models
 
 
 @dataclass
@@ -51,6 +49,7 @@ class ModelTrainer:
                 test_array[:, -1]
             )
 
+            # Define models
             models = {
                 "Linear Regression": LinearRegression(),
                 "Gradient Boosting Regressor": GradientBoostingRegressor(),
@@ -58,12 +57,16 @@ class ModelTrainer:
                 "Decision Tree": DecisionTreeRegressor(),
                 "Random Forest Regressor": RandomForestRegressor(),
                 "XGBRegressor": XGBRegressor(),
-                "CatBoosting Regressor": CatBoostRegressor(verbose=False),
+                "CatBoosting Regressor": CatBoostRegressor(
+                    verbose=False
+                ),
                 "AdaBoost Regressor": AdaBoostRegressor()
             }
 
             # Initial model evaluation
-            model_report: dict = evaluate_model(
+            logging.info("Starting initial model evaluation")
+
+            initial_model_report = evaluate_model(
                 X_train=X_train,
                 y_train=y_train,
                 X_test=X_test,
@@ -72,118 +75,55 @@ class ModelTrainer:
             )
 
             logging.info(
-                f"Initial model evaluation completed: {model_report}"
+                f"Initial model evaluation completed: "
+                f"{initial_model_report}"
             )
 
-            # Hyperparameter grids for each model
-            params = {
-                "Linear Regression": {},
+            # Hyperparameter tuning
+            tuned_models, cv_model_report = tune_models(
+                models=models,
+                X_train=X_train,
+                y_train=y_train
+            )
 
-                "Gradient Boosting Regressor": {
-                    "n_estimators": [100, 200],
-                    "learning_rate": [0.05, 0.1],
-                    "max_depth": [2, 3],
-                    "subsample": [0.8, 1.0]
-                },
-
-                "K-Neighbors Regressor": {
-                    "n_neighbors": [3, 5, 7],
-                    "weights": ["uniform", "distance"],
-                    "p": [1, 2]
-                },
-
-                "Decision Tree": {
-                    "criterion": ["squared_error", "absolute_error"],
-                    "max_depth": [None, 5, 10],
-                    "min_samples_split": [2, 5],
-                    "min_samples_leaf": [1, 2]
-                },
-
-                "Random Forest Regressor": {
-                    "n_estimators": [100, 200],
-                    "max_depth": [None, 10, 20],
-                    "min_samples_split": [2, 5],
-                    "min_samples_leaf": [1, 2]
-                },
-
-                "XGBRegressor": {
-                    "n_estimators": [100, 200],
-                    "learning_rate": [0.05, 0.1],
-                    "max_depth": [3, 5],
-                    "subsample": [0.8, 1.0]
-                },
-
-                "CatBoosting Regressor": {
-                    "iterations": [100, 200],
-                    "learning_rate": [0.03, 0.1],
-                    "depth": [4, 6]
-                },
-
-                "AdaBoost Regressor": {
-                    "n_estimators": [50, 100],
-                    "learning_rate": [0.05, 0.1, 1.0],
-                    "loss": ["linear", "square"]
-                }
-            }
-
-            logging.info("Starting hyperparameter tuning")
-
-            tuned_models = {}
+            # Evaluate tuned models on test data
             model_report = {}
 
-            for model_name, model in models.items():
+            logging.info(
+                "Evaluating tuned models on test dataset"
+            )
 
-                logging.info(
-                    f"Hyperparameter tuning started for {model_name}"
-                )
-
-                # GridSearchCV with cross-validation
-                grid_search = GridSearchCV(
-                    estimator=model,
-                    param_grid=params[model_name],
-                    scoring="r2",
-                    cv=3,
-                    n_jobs=-1,
-                    verbose=0,
-                    error_score="raise"
-                )
-
-                grid_search.fit(X_train, y_train)
-
-                # Best estimator after hyperparameter tuning
-                best_model = grid_search.best_estimator_
-
-                # Evaluate tuned model on test data
-                predicted = best_model.predict(X_test)
+            for model_name, model in tuned_models.items():
+                predicted = model.predict(X_test)
 
                 score = r2_score_metric(y_test, predicted)
-
-                tuned_models[model_name] = best_model
                 model_report[model_name] = score
 
                 logging.info(
-                    f"{model_name} best parameters: "
-                    f"{grid_search.best_params_}"
-                )
-
-                logging.info(
-                    f"{model_name} best CV R2 score: "
-                    f"{grid_search.best_score_}"
-                )
-
-                logging.info(
-                    f"{model_name} test R2 score: {score}"
+                    f"{model_name} test R2 score: {score:.4f}"
                 )
 
             # Select the best model using test R2 score
-            best_model_score = max(model_report.values())
-
             best_model_name = max(
                 model_report,
                 key=model_report.get
             )
 
             best_model = tuned_models[best_model_name]
+            best_model_score = model_report[best_model_name]
+
+            # Best model details
+            logging.info("=" * 60)
+            logging.info("BEST MODEL SELECTED")
+            logging.info(f"Best Model Name: {best_model_name}")
+            logging.info(
+                f"Best CV R2 Score: "
+                f"{cv_model_report[best_model_name]:.4f}"
+            )
+            logging.info(
+                f"Best Test R2 Score: {best_model_score:.4f}"
+            )
+            logging.info("=" * 60)
 
             if best_model_score < 0.6:
                 raise CustomException(
@@ -192,13 +132,7 @@ class ModelTrainer:
                     sys
                 )
 
-            logging.info(
-                f"Best found model on testing dataset is "
-                f"{best_model_name} with R2 score: "
-                f"{best_model_score}"
-            )
-
-            # Create artifacts directory if it does not exist
+            # Create artifacts directory
             os.makedirs(
                 os.path.dirname(
                     self.model_trainer_config.trained_model_file_path
@@ -206,7 +140,7 @@ class ModelTrainer:
                 exist_ok=True
             )
 
-            # Save the best tuned model
+            # Save best model
             save_object(
                 file_path=(
                     self.model_trainer_config.trained_model_file_path
@@ -215,16 +149,20 @@ class ModelTrainer:
             )
 
             logging.info(
+                f"Best Model Name: {best_model_name}"
+            )
+            logging.info(
                 f"Best tuned model saved at "
                 f"{self.model_trainer_config.trained_model_file_path}"
             )
 
             # Final R2 score
             predicted = best_model.predict(X_test)
-
             r2_score = r2_score_metric(y_test, predicted)
 
-            logging.info(f"Final R2 score: {r2_score}")
+            logging.info(
+                f"Final R2 score: {r2_score:.4f}"
+            )
 
             return r2_score
 

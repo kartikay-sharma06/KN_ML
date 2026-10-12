@@ -23,24 +23,32 @@ def save_object(file_path:str,obj):
 
 
 
-def evaluate_model(X_train,y_train,X_test,y_test,models:dict):
+
+def evaluate_model(X_train, y_train, X_test, y_test, models: dict):
     try:
-        report={}
+        report = {}
 
-        for i in range(len(models)):
-            model=list(models.values())[i]
+        for model_name, model in models.items():
+
             # Train model
-            model.fit(X_train,y_train)
+            model.fit(X_train, y_train)
 
-            # Predict Testing data
-            y_test_pred=model.predict(X_test)
+            # Predict test data
+            y_test_pred = model.predict(X_test)
 
-            # Get R2 score for test data
-            test_model_score=r2_score(y_test,y_test_pred)
+            # Calculate R2 score
+            test_model_score = r2_score(
+                y_test, y_test_pred
+            )
 
-            report[list(models.keys())[i]]=test_model_score
+            report[model_name] = test_model_score
+
+            logging.info(
+                f"{model_name} initial test R2 score: "
+                f"{test_model_score:.4f}"
+            )
 
         return report
 
     except Exception as e:
-        raise CustomException(e,sys.exc_info())
+        raise CustomException(e, sys.exc_info())
