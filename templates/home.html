@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111310">
+    <title>Predict Score — ScoreLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a class="brand" href="{{ url_for('index') }}">
+            <span class="brand-mark">S.</span>
+            <span>SCORELAB<span style="color: var(--lime)">.</span></span>
+        </a>
+
+        <a class="nav-label" href="{{ url_for('index') }}">
+            BACK TO OVERVIEW
+        </a>
+    </nav>
+
+    <main class="page-shell">
+
+        <header class="page-heading">
+            <div>
+                <div class="eyebrow">STUDENT ANALYTICS / PREDICTION ENGINE</div>
+
+                <h1>Let's find your<br>next score.</h1>
+
+                <p>
+                    Configure the student's academic profile below.
+                    The prediction engine will estimate the mathematics
+                    score from the information provided.
+                </p>
+            </div>
+
+            <span class="micro-label step-label">WORKSPACE / 01</span>
+        </header>
+
+        <div class="workspace">
+
+            <section class="form-card">
+                <div class="card-heading">
+                    <div>
+                        <h2>Student profile</h2>
+                        <p>Complete each field to generate a prediction.</p>
+                    </div>
+                    <span class="card-index">01 — 07</span>
+                </div>
+
+                <form action="{{ url_for('predict_datapoint') }}"
+                      method="post">
+
+                    <div class="form-grid">
+
+                        <div class="field">
+                            <label for="gender">Gender</label>
+                            <select id="gender" name="gender" required>
+                                <option value="" selected disabled>
+                                    Select gender
+                                </option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="ethnicity">Race or ethnicity</label>
+                            <select id="ethnicity" name="ethnicity" required>
+                                <option value="" selected disabled>
+                                    Select group
+                                </option>
+                                <option value="group A">Group A</option>
+                                <option value="group B">Group B</option>
+                                <option value="group C">Group C</option>
+                                <option value="group D">Group D</option>
+                                <option value="group E">Group E</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="parental_level_of_education">
+                                Parental education
+                            </label>
+                            <select id="parental_level_of_education"
+                                    name="parental_level_of_education"
+                                    required>
+                                <option value="" selected disabled>
+                                    Select education
+                                </option>
+                                <option value="associate's degree">
+                                    Associate's degree
+                                </option>
+                                <option value="bachelor's degree">
+                                    Bachelor's degree
+                                </option>
+                                <option value="high school">
+                                    High school
+                                </option>
+                                <option value="master's degree">
+                                    Master's degree
+                                </option>
+                                <option value="some college">
+                                    Some college
+                                </option>
+                                <option value="some high school">
+                                    Some high school
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="lunch">Lunch type</label>
+                            <select id="lunch" name="lunch" required>
+                                <option value="" selected disabled>
+                                    Select lunch type
+                                </option>
+                                <option value="standard">Standard</option>
+                                <option value="free/reduced">Free / reduced</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="test_preparation_course">
+                                Test preparation
+                            </label>
+                            <select id="test_preparation_course"
+                                    name="test_preparation_course"
+                                    required>
+                                <option value="" selected disabled>
+                                    Select status
+                                </option>
+                                <option value="none">Not completed</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="reading_score">
+                                Reading score / 100
+                            </label>
+                            <input id="reading_score"
+                                   type="number"
+                                   name="reading_score"
+                                   placeholder="Enter reading score"
+                                   min="0"
+                                   max="100"
+                                   step="1"
+                                   required>
+                        </div>
+
+                        <div class="field">
+                            <label for="writing_score">
+                                Writing score / 100
+                            </label>
+                            <input id="writing_score"
+                                   type="number"
+                                   name="writing_score"
+                                   placeholder="Enter writing score"
+                                   min="0"
+                                   max="100"
+                                   step="1"
+                                   required>
+                        </div>
+
+                    </div>
+
+                    <div class="form-footer">
+                        <button type="submit"
+                                class="button button-primary submit-button">
+                            Generate prediction
+                            <span aria-hidden="true">↗</span>
+                        </button>
+
+                        <p class="form-note">
+                            Prediction is based on your trained ML model.
+                            Actual academic results may differ.
+                        </p>
+                    </div>
+
+                </form>
+            </section>
+
+            <aside class="sidebar">
+
+                <section class="result-card" aria-live="polite">
+                    <span class="micro-label">PREDICTION OUTPUT / 01</span>
+
+                    {% if results is defined and results is not none %}
+                        <div class="result-number">{{ results }}</div>
+                        <div class="result-caption">
+                            Predicted mathematics score on the model's
+                            original output scale.
+                        </div>
+
+                        <div class="result-divider"></div>
+
+                        <div class="result-status">
+                            <span class="status-dot"></span>
+                            Prediction generated
+                        </div>
+                    {% else %}
+                        <div class="result-number">--</div>
+                        <div class="result-caption">
+                            Your prediction will appear here after you
+                            submit the student profile.
+                        </div>
+
+                        <div class="result-divider"></div>
+
+                        <div class="result-status">
+                            <span class="status-dot"></span>
+                            Awaiting input
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="info-card">
+                    <h3>How it works</h3>
+                    <p>
+                        Your selected profile and assessment scores
+                        are passed to the existing prediction pipeline.
+                    </p>
+
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-number">01</span>
+                            <span>Provide the student profile.</span>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="info-number">02</span>
+                            <span>Submit the assessment scores.</span>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="info-number">03</span>
+                            <span>View the model's prediction.</span>
+                        </div>
+                    </div>
+                </section>
+
+            </aside>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <span>SCORELAB / PERFORMANCE INTELLIGENCE</span>
+        <span>FLASK · SCIKIT-LEARN</span>
+    </footer>
+
+</body>
+</html>

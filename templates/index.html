@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111310">
+    <meta name="description" content="An ML-powered student mathematics score prediction application.">
+    <title>ScoreLab — Student Performance Intelligence</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a class="brand" href="{{ url_for('index') }}">
+            <span class="brand-mark">S.</span>
+            <span>SCORELAB<span style="color: var(--lime)">.</span></span>
+        </a>
+        <span class="nav-label">STUDENT ANALYTICS / 001</span>
+    </nav>
+
+    <main class="hero">
+        <div class="eyebrow">MACHINE LEARNING / PERFORMANCE</div>
+
+        <h1>
+            Numbers tell<br>
+            a story.<br>
+            <span>We predict it.</span>
+        </h1>
+
+        <p class="hero-description">
+            An intelligent student performance tool that turns
+            academic indicators into a predicted mathematics score.
+            Explore how educational factors contribute to the outcome.
+        </p>
+
+        <div class="hero-actions">
+            <a href="{{ url_for('predict_datapoint') }}"
+               class="button button-primary">
+                Predict a score <span aria-hidden="true">↗</span>
+            </a>
+
+            <a href="#about" class="button button-secondary">
+                Explore the project
+            </a>
+        </div>
+
+        <section class="hero-bottom" id="about">
+            <div class="hero-stat">
+                <span class="stat-number">01</span>
+                <span class="stat-caption">Machine learning prediction</span>
+            </div>
+
+            <div class="hero-stat">
+                <span class="stat-number">07</span>
+                <span class="stat-caption">Student input fields</span>
+            </div>
+
+            <div class="hero-stat">
+                <span class="stat-number">100</span>
+                <span class="stat-caption">Maximum score scale</span>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <span>SCORELAB / STUDENT PERFORMANCE INDICATOR</span>
+        <span>BUILT WITH FLASK & MACHINE LEARNING</span>
+    </footer>
+
+</body>
+</html>
